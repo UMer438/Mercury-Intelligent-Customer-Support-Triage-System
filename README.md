@@ -2,7 +2,6 @@
 
 Mercury is an AI-powered customer support triage agent designed to streamline ticket management. It analyzes incoming customer complaints, categorizes them, assesses sentiment and urgency, and drafts an appropriate response using the Groq Llama 3 API.
 
-![Mercury Dashboard](https://placehold.co/600x400?text=Mercury+Dashboard+Preview)
 
 ## 🚀 Features
 
