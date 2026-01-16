@@ -1,3 +1,12 @@
+---
+title: Triage Agent
+emoji: 🐨
+colorFrom: purple
+colorTo: gray
+sdk: docker
+pinned: false
+---
+
 # Mercury - Intelligent Customer Support Triage System
 
 Mercury is an AI-powered customer support triage agent designed to streamline ticket management. It analyzes incoming customer complaints, categorizes them, assesses sentiment and urgency, and drafts an appropriate response using the Groq Llama 3 API.
@@ -97,3 +106,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 This project is licensed under the MIT License.
+
