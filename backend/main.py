@@ -32,31 +32,17 @@ from fastapi.responses import FileResponse
 
 # Initialize Groq Client
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY is not set in the environment variables.")
 
-llm = ChatGroq(
-    temperature=0,
-    model_name="llama-3.3-70b-versatile",
-    groq_api_key=GROQ_API_KEY
-)
-
-# Define Pydantic models
-class TicketInput(BaseModel):
-    complaint: str
-
-class TicketAnalysis(BaseModel):
-    category: str = Field(description="The category of the ticket: Hardware_Defect, Software_Bug, Billing_Dispute, Shipping_Delay, User_Error")
-    sentiment: str = Field(description="The sentiment of the ticket")
-    urgency: str = Field(description="The urgency of the ticket: Low, Medium, High, Critical")
-    suggested_action: str = Field(description="The suggested action: REFUND, REPLACE, TROUBLESHOOT, ESCALATE")
-    draft_response: str = Field(description="A drafted response to the customer")
-
-# Define the parser
-parser = JsonOutputParser(pydantic_object=TicketAnalysis)
-
-# Define the prompt template
-system_prompt = """
+if GROQ_API_KEY:
+    try:
+        llm = ChatGroq(
+            temperature=0,
+            model_name="llama-3.3-70b-versatile",
+            groq_api_key=GROQ_API_KEY
+        )
+        
+        # Define the prompt template
+        system_prompt = """
 You are a Senior Customer Support AI Agent.
 STRICT INSTRUCTIONS:
 1. Analyze the ticket for root cause and emotion.
@@ -69,16 +55,25 @@ FEW-SHOT EXAMPLES:
 User: "I was charged twice!" -> {{"category": "Billing_Dispute", "sentiment": "Frustrated", "urgency": "High", "suggested_action": "REFUND", "draft_response": "I sincerely apologize for the billing error. I have processed a full refund for the duplicate charge, which should appear in your account shortly."}}
 """
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", system_prompt),
-    ("human", "{query}\n\n{format_instructions}")
-])
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("human", "{query}\n\n{format_instructions}")
+        ])
 
-# Create the chain
-chain = prompt | llm | parser
+        # Create the chain
+        chain = prompt | llm | parser
+    except Exception as e:
+        print(f"Error initializing LLM: {e}")
+        chain = None
+else:
+    print("WARNING: GROQ_API_KEY is not set. The API will return 500 errors.")
+    chain = None
 
 @app.post("/analyze", response_model=TicketAnalysis)
 async def analyze_ticket(ticket: TicketInput):
+    if not chain:
+         raise HTTPException(status_code=500, detail="Server Configuration Error: GROQ_API_KEY is missing. Please verify the server settings.")
+    
     try:
         response = chain.invoke({
             "query": ticket.complaint,
