@@ -30,6 +30,20 @@ from fastapi.responses import FileResponse
 # Let's mount static first for distinct files, and catch-all for index.html
 
 
+# Define Pydantic models
+class TicketInput(BaseModel):
+    complaint: str
+
+class TicketAnalysis(BaseModel):
+    category: str = Field(description="The category of the ticket: Hardware_Defect, Software_Bug, Billing_Dispute, Shipping_Delay, User_Error")
+    sentiment: str = Field(description="The sentiment of the ticket")
+    urgency: str = Field(description="The urgency of the ticket: Low, Medium, High, Critical")
+    suggested_action: str = Field(description="The suggested action: REFUND, REPLACE, TROUBLESHOOT, ESCALATE")
+    draft_response: str = Field(description="A drafted response to the customer")
+
+# Define the parser
+parser = JsonOutputParser(pydantic_object=TicketAnalysis)
+
 # Initialize Groq Client
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
