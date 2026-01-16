@@ -16,11 +16,19 @@ app = FastAPI(title="Auto-Triage AI Agent")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# We will mount StaticFiles after defining the API routes so API takes precedence, 
+# OR we mount it at specific path, but for SPA we usually catch all or mount root.
+# Let's mount static first for distinct files, and catch-all for index.html
+
 
 # Initialize Groq Client
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -56,9 +64,9 @@ STRICT INSTRUCTIONS:
 3. Determine urgency: [Low, Medium, High, Critical].
 4. Suggest action: [REFUND, REPLACE, TROUBLESHOOT, ESCALATE].
 5. Output STRICTLY valid JSON.
-
+6. Provide a professional, empathetic, and concise response.
 FEW-SHOT EXAMPLES:
-User: "I was charged twice!" -> {{"category": "Billing_Dispute", "sentiment": "Frustrated", "urgency": "High", "suggested_action": "REFUND", "draft_response": "I apologize for the error. I have processed a refund."}}
+User: "I was charged twice!" -> {{"category": "Billing_Dispute", "sentiment": "Frustrated", "urgency": "High", "suggested_action": "REFUND", "draft_response": "I sincerely apologize for the billing error. I have processed a full refund for the duplicate charge, which should appear in your account shortly."}}
 """
 
 prompt = ChatPromptTemplate.from_messages([
@@ -80,6 +88,10 @@ async def analyze_ticket(ticket: TicketInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Mount static files
+app.mount("/_next", StaticFiles(directory="static/_next"), name="next")
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=7860)
